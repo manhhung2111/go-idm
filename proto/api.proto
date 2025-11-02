@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package go_idm.v1;
-option go_package = "grpc/go_idm_v1";
+option go_package = "grpc/go_idm_v1pro";
 
 service GoIDMService {
 	rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
@@ -26,9 +26,9 @@ enum DownloadStatus {
 	Succeeded = 4;
 }
 
-message User {
+message Account {
 	uint64 id = 1;
-	string username = 2;
+	string account_name = 2;
 }
 
 message DownloadTask {
@@ -39,16 +39,16 @@ message DownloadTask {
 }
 
 message CreateAccountRequest {
-	string username = 1;
+	string account_name = 1;
 	string password = 2;
 }
 
 message CreateAccountResponse {
-	uint64 user_id = 1;
+	uint64 account_id = 1;
 }
 
 message CreateSessionRequest {
-	string username = 1;
+	string account_name = 1;
 	string password = 2;
 }
 

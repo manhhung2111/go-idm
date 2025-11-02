@@ -282,7 +282,7 @@
     "v1CreateAccountRequest": {
       "type": "object",
       "properties": {
-        "username": {
+        "accountName": {
           "type": "string"
         },
         "password": {
@@ -293,7 +293,7 @@
     "v1CreateAccountResponse": {
       "type": "object",
       "properties": {
-        "userId": {
+        "accountId": {
           "type": "string",
           "format": "uint64"
         }
@@ -324,7 +324,7 @@
     "v1CreateSessionRequest": {
       "type": "object",
       "properties": {
-        "username": {
+        "accountName": {
           "type": "string"
         },
         "password": {

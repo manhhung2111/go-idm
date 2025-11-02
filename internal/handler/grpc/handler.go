@@ -5,20 +5,36 @@ import (
 	"fmt"
 
 	go_idm_v1 "github.com/manhhung2111/go-idm/internal/generated/proto"
+	"github.com/manhhung2111/go-idm/internal/logic"
 )
 
 
 type Handler struct {
 	go_idm_v1.UnimplementedGoIDMServiceServer
+	accountLogic logic.Account
 }
 
-func NewHandler() go_idm_v1.GoIDMServiceServer {
-	return &Handler{}
+func NewHandler(
+	accountLogic logic.Account,
+) go_idm_v1.GoIDMServiceServer {
+	return &Handler{
+		accountLogic: accountLogic,
+	}
 }
 
 func (h *Handler) CreateAccount(ctx context.Context, req *go_idm_v1.CreateAccountRequest) (*go_idm_v1.CreateAccountResponse, error) {
-	fmt.Println("CreateAccount called")
-	return &go_idm_v1.CreateAccountResponse{}, nil
+	output, err := h.accountLogic.CreateAccount(ctx, logic.CreateAccountParams{
+		AccountName: req.GetAccountName(),
+		Password: req.GetPassword(),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &go_idm_v1.CreateAccountResponse{
+		AccountId: output.ID,
+	}, nil
 }
 
 func (h *Handler) CreateSession(ctx context.Context, req *go_idm_v1.CreateSessionRequest) (*go_idm_v1.CreateSessionResponse, error) {

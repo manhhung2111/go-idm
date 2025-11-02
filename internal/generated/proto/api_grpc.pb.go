@@ -4,7 +4,7 @@
 // - protoc             v6.32.1
 // source: proto/api.proto
 
-package go_idm_v1
+package go_idm_v1pro
 
 import (
 	context "context"

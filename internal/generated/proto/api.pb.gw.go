@@ -2,11 +2,11 @@
 // source: proto/api.proto
 
 /*
-Package go_idm_v1 is a reverse proxy.
+Package go_idm_v1pro is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package go_idm_v1
+package go_idm_v1pro
 
 import (
 	"context"
