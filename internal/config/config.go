@@ -2,14 +2,15 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"gopkg.in/yaml.v2"
+	"os"
 )
 
 type ConfigFilePath string
 
 type Config struct {
-	Account Account `yaml:"account"`
+	Auth     Auth     `yaml:"auth"`
+	Log      Log      `yaml:"log"`
 	Database Database `yaml:"database"`
 }
 

@@ -26,7 +26,7 @@ type CreateAccountOutput struct {
 
 type Account interface {
 	CreateAccount(ctx context.Context, params CreateAccountParams) (CreateAccountOutput, error)
-	CreateSession(ctx context.Context, params CreateSessionParams)
+	CreateSession(ctx context.Context, params CreateSessionParams) (token string, err error)
 }
 
 type account struct {
@@ -34,6 +34,7 @@ type account struct {
 	accountDataAccessor         database.AccountDataAccessor
 	accountPasswordDataAccessor database.AccountPasswordDataAccessor
 	hashLogic                   Hash
+	tokenLogic                  Token
 }
 
 func NewAccount(
@@ -41,19 +42,21 @@ func NewAccount(
 	accountDataAccessor database.AccountDataAccessor,
 	accountPasswordDataAccessor database.AccountPasswordDataAccessor,
 	hashLogic Hash,
+	tokenLogic Token,
 ) Account {
 	return &account{
 		goquDatabase:                goquDatabase,
 		accountDataAccessor:         accountDataAccessor,
 		accountPasswordDataAccessor: accountPasswordDataAccessor,
 		hashLogic:                   hashLogic,
+		tokenLogic:                  tokenLogic,
 	}
 }
 
 // CreateAccount implements Account.
 func (a *account) CreateAccount(ctx context.Context, params CreateAccountParams) (CreateAccountOutput, error) {
 	var accountId uint64
-	
+
 	txError := a.goquDatabase.WithTx(func(td *goqu.TxDatabase) error {
 		accountNameTaken, err := a.isAccountNameTaken(ctx, params.AccountName)
 		if err != nil {
@@ -92,14 +95,33 @@ func (a *account) CreateAccount(ctx context.Context, params CreateAccountParams)
 	}
 
 	return CreateAccountOutput{
-		ID: accountId,
+		ID:          accountId,
 		AccountName: params.AccountName,
 	}, nil
 }
 
 // CreateSession implements Account.
-func (a *account) CreateSession(ctx context.Context, params CreateSessionParams) {
-	panic("unimplemented")
+func (a *account) CreateSession(ctx context.Context, params CreateSessionParams) (token string, err error) {
+	existingAccount, err := a.accountDataAccessor.GetAccountByAccountName(ctx, params.AccountName)
+	if err != nil {
+		return "", err
+	}
+
+	existingAccountPassword, err := a.accountPasswordDataAccessor.GetAccountPassword(ctx, existingAccount.ID)
+	if err != nil {
+		return "", err
+	}
+
+	isHashEqual, err := a.hashLogic.IsHashEqual(ctx, params.Password, existingAccountPassword.HashedPassword)
+	if err != nil {
+		return "", err
+	}
+
+	if !isHashEqual {
+		return "", errors.New("incorrect password")
+	}
+
+	return "", nil
 }
 
 func (a *account) isAccountNameTaken(ctx context.Context, accountName string) (bool, error) {

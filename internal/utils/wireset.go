@@ -1,8 +1,7 @@
-package logic
+package utils
+
 import "github.com/google/wire"
 
 var WireSet = wire.NewSet(
-	NewHash,
-	NewAccount,
-	NewToken,
+	InitializeLogger,
 )

@@ -12,6 +12,7 @@ import (
 	"github.com/manhhung2111/go-idm/internal/dataaccess"
 	"github.com/manhhung2111/go-idm/internal/handler"
 	"github.com/manhhung2111/go-idm/internal/logic"
+	"github.com/manhhung2111/go-idm/internal/utils"
 	"github.com/manhhung2111/go-idm/internal/handler/grpc"
 )
 
@@ -20,6 +21,7 @@ var WireSet = wire.NewSet(
 	dataaccess.WireSet,
 	handler.WireSet,
 	logic.WireSet,
+	utils.WireSet,
 )
 
 func InitializeGrpcServer(configFilePath config.ConfigFilePath) (grpc.Server, func(), error) {

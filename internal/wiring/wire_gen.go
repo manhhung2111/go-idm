@@ -14,6 +14,7 @@ import (
 	"github.com/manhhung2111/go-idm/internal/handler"
 	"github.com/manhhung2111/go-idm/internal/handler/grpc"
 	"github.com/manhhung2111/go-idm/internal/logic"
+	"github.com/manhhung2111/go-idm/internal/utils"
 )
 
 // Injectors from wire.go:
@@ -29,18 +30,31 @@ func InitializeGrpcServer(configFilePath config.ConfigFilePath) (grpc.Server, fu
 		return nil, nil, err
 	}
 	goquDatabase := database.InitializeGoquDB(db)
-	accountDataAccessor := database.NewAccountDataAccessor(goquDatabase)
-	accountPasswordDataAccessor := database.NewAccountPasswordDataAccessor(goquDatabase)
-	account := configConfig.Account
-	hash := logic.NewHash(account)
-	logicAccount := logic.NewAccount(goquDatabase, accountDataAccessor, accountPasswordDataAccessor, hash)
-	goIDMServiceServer := grpc.NewHandler(logicAccount)
+	log := configConfig.Log
+	logger, cleanup2, err := utils.InitializeLogger(log)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	accountDataAccessor := database.NewAccountDataAccessor(goquDatabase, logger)
+	accountPasswordDataAccessor := database.NewAccountPasswordDataAccessor(goquDatabase, logger)
+	auth := configConfig.Auth
+	hash := logic.NewHash(auth)
+	token, err := logic.NewToken(accountDataAccessor, auth, logger)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	account := logic.NewAccount(goquDatabase, accountDataAccessor, accountPasswordDataAccessor, hash, token)
+	goIDMServiceServer := grpc.NewHandler(account)
 	server := grpc.NewServer(goIDMServiceServer)
 	return server, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }
 
 // wire.go:
 
-var WireSet = wire.NewSet(config.WireSet, dataaccess.WireSet, handler.WireSet, logic.WireSet)
+var WireSet = wire.NewSet(config.WireSet, dataaccess.WireSet, handler.WireSet, logic.WireSet, utils.WireSet)
