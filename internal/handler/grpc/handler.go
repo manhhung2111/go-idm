@@ -8,7 +8,6 @@ import (
 	"github.com/manhhung2111/go-idm/internal/logic"
 )
 
-
 type Handler struct {
 	go_idm_v1.UnimplementedGoIDMServiceServer
 	accountLogic logic.Account
@@ -25,7 +24,7 @@ func NewHandler(
 func (h *Handler) CreateAccount(ctx context.Context, req *go_idm_v1.CreateAccountRequest) (*go_idm_v1.CreateAccountResponse, error) {
 	output, err := h.accountLogic.CreateAccount(ctx, logic.CreateAccountParams{
 		AccountName: req.GetAccountName(),
-		Password: req.GetPassword(),
+		Password:    req.GetPassword(),
 	})
 
 	if err != nil {
@@ -57,7 +56,6 @@ func (h *Handler) UpdateDownloadTask(ctx context.Context, req *go_idm_v1.UpdateD
 	return &go_idm_v1.UpdateDownloadTaskResponse{}, nil
 }
 
-
 func (h *Handler) DeleteDownloadTask(ctx context.Context, req *go_idm_v1.DeleteDownloadTaskRequest) (*go_idm_v1.DeleteDownloadTaskResponse, error) {
 	fmt.Println("DeleteDownloadTask called")
 	return &go_idm_v1.DeleteDownloadTaskResponse{}, nil
@@ -71,5 +69,3 @@ func (h *Handler) GetDownloadTaskFile(req *go_idm_v1.GetDownloadTaskFiletRequest
 	}
 	return nil
 }
-
-

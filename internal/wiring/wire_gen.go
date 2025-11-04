@@ -54,8 +54,10 @@ func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func()
 	accountNameCache := cache.NewAccountNameCache(cacheClient, logger)
 	account := logic.NewAccount(goquDatabase, accountDataAccessor, accountPasswordDataAccessor, hash, token, accountNameCache, logger)
 	goIDMServiceServer := grpc.NewHandler(account)
-	server := grpc.NewServer(goIDMServiceServer)
-	httpServer := http.NewServer()
+	configGRPC := configConfig.GRPC
+	server := grpc.NewServer(goIDMServiceServer, configGRPC, logger)
+	configHTTP := configConfig.HTTP
+	httpServer := http.NewServer(configGRPC, configHTTP, logger)
 	appServer := app.NewServer(server, httpServer, logger)
 	return appServer, func() {
 		cleanup2()

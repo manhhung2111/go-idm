@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -10,9 +9,21 @@ import (
 	"github.com/manhhung2111/go-idm/internal/dataaccess/database"
 	"github.com/manhhung2111/go-idm/internal/utils"
 	"go.uber.org/zap"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const privateKey = "manhhung2111-secret"
+
+var (
+	errUnexpectedSigningMethod = status.Error(codes.Unauthenticated, "unexpected signing method")
+	errCannotGetTokensClaims   = status.Error(codes.Unauthenticated, "cannot get token's claims")
+	errCannotGetTokensSubClaim = status.Error(codes.Unauthenticated, "cannot get token's sub claim")
+	errCannotGetTokensExpClaim = status.Error(codes.Unauthenticated, "cannot get token's exp claim")
+	errInvalidToken            = status.Error(codes.Unauthenticated, "invalid token")
+	errFailedToSignToken       = status.Error(codes.Internal, "failed to sign token")
+)
 
 type Token interface {
 	GetToken(ctx context.Context, accountId uint64) (string, time.Time, error)
@@ -58,7 +69,7 @@ func (t *token) GetToken(ctx context.Context, accountId uint64) (string, time.Ti
 	tokenString, err := token.SignedString(privateKey)
 	if err != nil {
 		logger.With(zap.Error(err)).Error("failed to sign token")
-		return "", time.Time{}, err
+		return "", time.Time{}, errFailedToSignToken
 	}
 
 	return tokenString, expireTime, nil
@@ -70,13 +81,13 @@ func (t *token) GetAccountIDAndExpireTime(ctx context.Context, token string) (ui
 	parsedToken, err := jwt.Parse(token, func(parsedToken *jwt.Token) (interface{}, error) {
 		if _, ok := parsedToken.Method.(*jwt.SigningMethodHMAC); !ok {
 			logger.Error("unexpected signing method")
-			return nil, errors.New("unexpected signing method")
+			return nil, errUnexpectedSigningMethod
 		}
 
 		claims, ok := parsedToken.Claims.(jwt.MapClaims)
 		if !ok {
 			logger.Error("cannot get token's claims")
-			return nil, errors.New("cannot get token's claims")
+			return nil, errCannotGetTokensClaims
 		}
 
 		return claims, nil
@@ -89,25 +100,25 @@ func (t *token) GetAccountIDAndExpireTime(ctx context.Context, token string) (ui
 
 	if !parsedToken.Valid {
 		logger.Error("invalid token")
-		return 0, time.Time{}, errors.New("invalid token")
+		return 0, time.Time{}, errInvalidToken
 	}
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok {
 		logger.Error("cannot get token's claims")
-		return 0, time.Time{}, errors.New("cannot get token's claims")
+		return 0, time.Time{}, errCannotGetTokensClaims
 	}
 
 	accountId, ok := claims["sub"].(float64)
 	if !ok {
 		logger.Error("cannot get token's sub claim")
-		return 0, time.Time{}, errors.New("cannot get token's sub claim")
+		return 0, time.Time{}, errCannotGetTokensSubClaim
 	}
 
 	expireTimeUnix, ok := claims["exp"].(float64)
 	if !ok {
 		logger.Error("cannot get token's exp claim")
-		return 0, time.Time{}, errors.New("cannot get token's exp claim")
+		return 0, time.Time{}, errCannotGetTokensExpClaim
 	}
 
 	return uint64(accountId), time.Unix(int64(expireTimeUnix), 0), nil

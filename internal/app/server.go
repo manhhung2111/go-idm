@@ -28,7 +28,7 @@ func NewServer(
 	}
 }
 
-func (s *Server) Start() {
+func (s *Server) Start() error {
 	go func() {
 		err := s.grpcServer.Start(context.Background())
 		s.logger.With(zap.Error(err)).Info("grpc server stopped")
@@ -40,4 +40,5 @@ func (s *Server) Start() {
 	}()
 
 	utils.BlockUntilSignal(syscall.SIGINT, syscall.SIGTERM)
+	return nil
 }

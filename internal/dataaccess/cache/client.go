@@ -9,6 +9,8 @@ import (
 	"github.com/manhhung2111/go-idm/internal/config"
 	"github.com/manhhung2111/go-idm/internal/utils"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -51,7 +53,7 @@ func (c *cacheClient) AddToSet(ctx context.Context, key string, data ...any) err
 
 	if err := c.redisClient.SAdd(ctx, key, data...).Err(); err != nil {
 		logger.With(zap.Error(err)).Error("failed to set data into set inside cache")
-		return err
+		return status.Errorf(codes.Internal, "failed to set data into set inside cache: %+v", err)
 	}
 
 	return nil
@@ -69,7 +71,7 @@ func (c *cacheClient) Get(ctx context.Context, key string) (any, error) {
 		}
 
 		logger.With(zap.Error(err)).Error("failed to get data from cache")
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to get data from cache: %+v", err)
 	}
 
 	return data, nil
@@ -84,7 +86,7 @@ func (c *cacheClient) IsDataInSet(ctx context.Context, key string, data any) (bo
 	result, err := c.redisClient.SIsMember(ctx, key, data).Result()
 	if err != nil {
 		logger.With(zap.Error(err)).Error("failed to check if data is member of set inside cache")
-		return false, err
+		return false, status.Errorf(codes.Internal, "failed to check if data is member of set inside cache: %+v", err)
 	}
 
 	return result, nil
@@ -99,7 +101,7 @@ func (c *cacheClient) Set(ctx context.Context, key string, data any, ttl time.Du
 
 	if err := c.redisClient.Set(ctx, key, data, ttl).Err(); err != nil {
 		logger.With(zap.Error(err)).Error("failed to set data into cache")
-		return err
+		return status.Errorf(codes.Internal, "failed to set data into cache: %+v", err)
 	}
 
 	return nil

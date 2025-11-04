@@ -2,13 +2,17 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"os"
+
+	"github.com/manhhung2111/go-idm/config"
+	"gopkg.in/yaml.v2"
 )
 
 type ConfigFilePath string
 
 type Config struct {
+	GRPC     GRPC     `yaml:"grpc"`
+	HTTP     HTTP     `yaml:"http"`
 	Auth     Auth     `yaml:"auth"`
 	Log      Log      `yaml:"log"`
 	Database Database `yaml:"database"`
@@ -16,11 +20,19 @@ type Config struct {
 }
 
 func NewConfig(filePath ConfigFilePath) (Config, error) {
-	configBytes, err := os.ReadFile(string(filePath))
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to read Yaml file: %w", err)
+	var (
+		configBytes = config.DefaultConfigBytes
+		config      = Config{}
+		err         error
+	)
+
+	if filePath != "" {
+		configBytes, err = os.ReadFile(string(filePath))
+		if err != nil {
+			return Config{}, fmt.Errorf("failed to read YAML file: %w", err)
+		}
 	}
-	config := Config{}
+
 	err = yaml.Unmarshal(configBytes, &config)
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal Yaml: %w", err)

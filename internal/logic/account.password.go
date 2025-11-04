@@ -6,6 +6,9 @@ import (
 
 	"github.com/manhhung2111/go-idm/internal/config"
 	"golang.org/x/crypto/bcrypt"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Hash interface {
@@ -25,23 +28,23 @@ func NewHash(authConfig config.Auth) Hash {
 
 
 // Hash implements Hash.
-func (h *hash) Hash(ctx context.Context, data string) (string, error) {
+func (h *hash) Hash(_ context.Context, data string) (string, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(data), h.authConfig.Hash.Cost)
 	if err != nil {
-		return "", err
+		return "", status.Errorf(codes.Internal, "failed to hash data: %+v", err)
 	}
 
 	return string(hashed), nil
 }
 
 // IsHashEqual implements Hash.
-func (h *hash) IsHashEqual(ctx context.Context, data string, hashedData string) (bool, error) {
+func (h *hash) IsHashEqual(_ context.Context, data string, hashedData string) (bool, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(hashedData), []byte(data)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return false, nil
 		}
 
-		return false, err
+		return false, status.Errorf(codes.Internal, "failed to check if data equal hash: %+v", err)
 	}
 
 	return true, nil 
