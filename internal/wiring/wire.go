@@ -13,7 +13,7 @@ import (
 	"github.com/manhhung2111/go-idm/internal/handler"
 	"github.com/manhhung2111/go-idm/internal/logic"
 	"github.com/manhhung2111/go-idm/internal/utils"
-	"github.com/manhhung2111/go-idm/internal/handler/grpc"
+	"github.com/manhhung2111/go-idm/internal/app"
 )
 
 var WireSet = wire.NewSet(
@@ -22,9 +22,10 @@ var WireSet = wire.NewSet(
 	handler.WireSet,
 	logic.WireSet,
 	utils.WireSet,
+	app.WireSet,
 )
 
-func InitializeGrpcServer(configFilePath config.ConfigFilePath) (grpc.Server, func(), error) {
+func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func(), error) {
 	wire.Build(WireSet)
 
 	return nil, nil, nil

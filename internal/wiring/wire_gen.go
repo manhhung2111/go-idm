@@ -8,18 +8,21 @@ package wiring
 
 import (
 	"github.com/google/wire"
+	"github.com/manhhung2111/go-idm/internal/app"
 	"github.com/manhhung2111/go-idm/internal/config"
 	"github.com/manhhung2111/go-idm/internal/dataaccess"
+	"github.com/manhhung2111/go-idm/internal/dataaccess/cache"
 	"github.com/manhhung2111/go-idm/internal/dataaccess/database"
 	"github.com/manhhung2111/go-idm/internal/handler"
 	"github.com/manhhung2111/go-idm/internal/handler/grpc"
+	"github.com/manhhung2111/go-idm/internal/handler/http"
 	"github.com/manhhung2111/go-idm/internal/logic"
 	"github.com/manhhung2111/go-idm/internal/utils"
 )
 
 // Injectors from wire.go:
 
-func InitializeGrpcServer(configFilePath config.ConfigFilePath) (grpc.Server, func(), error) {
+func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func(), error) {
 	configConfig, err := config.NewConfig(configFilePath)
 	if err != nil {
 		return nil, nil, err
@@ -46,10 +49,15 @@ func InitializeGrpcServer(configFilePath config.ConfigFilePath) (grpc.Server, fu
 		cleanup()
 		return nil, nil, err
 	}
-	account := logic.NewAccount(goquDatabase, accountDataAccessor, accountPasswordDataAccessor, hash, token)
+	configCache := configConfig.Cache
+	cacheClient := cache.NewCacheClient(configCache, logger)
+	accountNameCache := cache.NewAccountNameCache(cacheClient, logger)
+	account := logic.NewAccount(goquDatabase, accountDataAccessor, accountPasswordDataAccessor, hash, token, accountNameCache, logger)
 	goIDMServiceServer := grpc.NewHandler(account)
 	server := grpc.NewServer(goIDMServiceServer)
-	return server, func() {
+	httpServer := http.NewServer()
+	appServer := app.NewServer(server, httpServer, logger)
+	return appServer, func() {
 		cleanup2()
 		cleanup()
 	}, nil
@@ -57,4 +65,4 @@ func InitializeGrpcServer(configFilePath config.ConfigFilePath) (grpc.Server, fu
 
 // wire.go:
 
-var WireSet = wire.NewSet(config.WireSet, dataaccess.WireSet, handler.WireSet, logic.WireSet, utils.WireSet)
+var WireSet = wire.NewSet(config.WireSet, dataaccess.WireSet, handler.WireSet, logic.WireSet, utils.WireSet, app.WireSet)
