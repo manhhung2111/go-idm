@@ -12,8 +12,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var (
+	tableNameAccounts = goqu.T("accounts")
+)
+
 const (
-	tableNameAccounts          = "accounts"
 	colNameAccountsID          = "id"
 	colNameAccountsAccountName = "account_name"
 )

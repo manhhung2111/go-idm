@@ -50,7 +50,7 @@ func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func()
 		return nil, nil, err
 	}
 	configCache := configConfig.Cache
-	cacheClient := cache.NewCacheClient(configCache, logger)
+	cacheClient := cache.NewRedisClient(configCache, logger)
 	accountNameCache := cache.NewAccountNameCache(cacheClient, logger)
 	account := logic.NewAccount(goquDatabase, accountDataAccessor, accountPasswordDataAccessor, hash, token, accountNameCache, logger)
 	goIDMServiceServer := grpc.NewHandler(account)

@@ -12,8 +12,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var (
+	tableNameAccountPasswords = goqu.T("account_passwords")
+)
+
 const (
-	tableNameAccountPasswords            = "account_passwords"
 	colNameAccountPasswordsOfAccountID = "of_account_id"
 	colNameAccountPasswordsHash        = "hashed_password"
 )
@@ -49,7 +52,7 @@ func (a *accountPasswordDataAccessor) CreateAccountPassword(ctx context.Context,
 	_, err := a.database.
 		Insert(tableNameAccountPasswords).
 		Rows(goqu.Record{
-			colNameAccountPasswordsHash: accountPassword.HashedPassword,
+			colNameAccountPasswordsHash:        accountPassword.HashedPassword,
 			colNameAccountPasswordsOfAccountID: accountPassword.OfAccountId,
 		}).Executor().ExecContext(ctx)
 
@@ -71,7 +74,7 @@ func (a *accountPasswordDataAccessor) UpdateAccountPassword(ctx context.Context,
 		Where(goqu.Ex{colNameAccountPasswordsOfAccountID: accountPassword.OfAccountId}).
 		Executor().
 		ExecContext(ctx)
-	
+
 	if err != nil {
 		logger.With(zap.Error(err)).Error("failed to update account password")
 		return status.Errorf(codes.Internal, "failed to update account password: %+v", err)
@@ -88,7 +91,7 @@ func (a *accountPasswordDataAccessor) GetAccountPassword(ctx context.Context, of
 		From(tableNameAccountPasswords).
 		Where(goqu.Ex{colNameAccountPasswordsOfAccountID: ofAccountId}).
 		ScanStructContext(ctx, &accountPassword)
-	
+
 	if err != nil {
 		logger.With(zap.Error(err)).Error("failed to get account password by id")
 		return AccountPassword{}, status.Errorf(codes.Internal, "failed to get account password by id: %+v", err)
