@@ -11,13 +11,16 @@ import (
 type Handler struct {
 	go_idm_v1.UnimplementedGoIDMServiceServer
 	accountLogic logic.Account
+	downloadTaskLogic logic.DownloadTask
 }
 
 func NewHandler(
 	accountLogic logic.Account,
+	downloadTaskLogic logic.DownloadTask,
 ) go_idm_v1.GoIDMServiceServer {
 	return &Handler{
 		accountLogic: accountLogic,
+		downloadTaskLogic: downloadTaskLogic,
 	}
 }
 
@@ -37,13 +40,32 @@ func (h *Handler) CreateAccount(ctx context.Context, req *go_idm_v1.CreateAccoun
 }
 
 func (h *Handler) CreateSession(ctx context.Context, req *go_idm_v1.CreateSessionRequest) (*go_idm_v1.CreateSessionResponse, error) {
-	fmt.Println("CreateSession called")
-	return &go_idm_v1.CreateSessionResponse{}, nil
+	token, err := h.accountLogic.CreateSession(ctx, logic.CreateSessionParams{
+		AccountName: req.GetAccountName(),
+		Password:    req.GetPassword(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &go_idm_v1.CreateSessionResponse{
+		Token: token,
+	}, nil
 }
 
 func (h *Handler) CreateDownloadTask(ctx context.Context, req *go_idm_v1.CreateDownloadTaskRequest) (*go_idm_v1.CreateDownloadTaskResponse, error) {
-	fmt.Println("CreateDownloadTask called")
-	return &go_idm_v1.CreateDownloadTaskResponse{}, nil
+	output, err := h.downloadTaskLogic.CreateDownloadTask(ctx, logic.CreateDownloadTaskParams{
+		Token:        req.GetToken(),
+		DownloadType: req.GetDownloadType(),
+		URL:          req.GetUrl(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &go_idm_v1.CreateDownloadTaskResponse{
+		DownloadTask: &output.DownloadTask,
+	}, nil
 }
 
 func (h *Handler) GetDownloadTaskList(ctx context.Context, req *go_idm_v1.GetDownloadTaskListRequest) (*go_idm_v1.GetDownloadTaskListResponse, error) {

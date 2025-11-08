@@ -64,7 +64,6 @@ message CreateDownloadTaskRequest {
 
 message CreateDownloadTaskResponse {
 	DownloadTask download_task = 1;
-
 }
 
 message GetDownloadTaskListRequest {

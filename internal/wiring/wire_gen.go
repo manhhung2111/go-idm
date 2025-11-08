@@ -13,7 +13,10 @@ import (
 	"github.com/manhhung2111/go-idm/internal/dataaccess"
 	"github.com/manhhung2111/go-idm/internal/dataaccess/cache"
 	"github.com/manhhung2111/go-idm/internal/dataaccess/database"
+	"github.com/manhhung2111/go-idm/internal/dataaccess/kafka/consumer"
+	"github.com/manhhung2111/go-idm/internal/dataaccess/kafka/producer"
 	"github.com/manhhung2111/go-idm/internal/handler"
+	"github.com/manhhung2111/go-idm/internal/handler/consumer"
 	"github.com/manhhung2111/go-idm/internal/handler/grpc"
 	"github.com/manhhung2111/go-idm/internal/handler/http"
 	"github.com/manhhung2111/go-idm/internal/logic"
@@ -53,12 +56,30 @@ func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func()
 	cacheClient := cache.NewRedisClient(configCache, logger)
 	accountNameCache := cache.NewAccountNameCache(cacheClient, logger)
 	account := logic.NewAccount(goquDatabase, accountDataAccessor, accountPasswordDataAccessor, hash, token, accountNameCache, logger)
-	goIDMServiceServer := grpc.NewHandler(account)
+	downloadTaskDataAccessor := database.NewDownloadTaskDataAccessor(goquDatabase, logger)
+	kafka := configConfig.Kafka
+	client, err := producer.NewClient(kafka, logger)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	downloadTaskCreatedProducer := producer.NewDownloadTaskCreatedProducer(client, logger)
+	downloadTask := logic.NewDownloadTask(token, downloadTaskDataAccessor, goquDatabase, logger, downloadTaskCreatedProducer)
+	goIDMServiceServer := grpc.NewHandler(account, downloadTask)
 	configGRPC := configConfig.GRPC
 	server := grpc.NewServer(goIDMServiceServer, configGRPC, logger)
 	configHTTP := configConfig.HTTP
 	httpServer := http.NewServer(configGRPC, configHTTP, logger)
-	appServer := app.NewServer(server, httpServer, logger)
+	downloadTaskCreateHandler := handler_consumer.NewDownloadTaskCreatedHandler(logger)
+	consumerConsumer, err := consumer.NewConsumer(kafka, logger)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	root := handler_consumer.NewRoot(downloadTaskCreateHandler, consumerConsumer, logger)
+	appServer := app.NewServer(server, httpServer, root, logger)
 	return appServer, func() {
 		cleanup2()
 		cleanup()

@@ -22,15 +22,15 @@ const (
 )
 
 type Account struct {
-	ID          uint64 `sql:"id"`
-	AccountName string `sql:"account_name"`
+	ID          uint64 `db:"id"`
+	AccountName string `db:"account_name"`
 }
 
 type AccountDataAccessor interface {
 	CreateAccount(ctx context.Context, account Account) (uint64, error)
 	GetAccountById(ctx context.Context, id uint64) (Account, error)
 	GetAccountByAccountName(ctx context.Context, accountName string) (Account, error)
-	WithDatabase(database IDatabase) AccountDataAccessor
+	WithDatabase(database IDatabase, logger *zap.Logger) AccountDataAccessor
 }
 
 type accountDataAccessor struct {
@@ -67,9 +67,10 @@ func (a *accountDataAccessor) CreateAccount(ctx context.Context, account Account
 }
 
 // WithDatabase implements AccountDataAccessor.
-func (a *accountDataAccessor) WithDatabase(database IDatabase) AccountDataAccessor {
+func (a *accountDataAccessor) WithDatabase(database IDatabase, logger *zap.Logger) AccountDataAccessor {
 	return &accountDataAccessor{
 		database: database,
+		logger: logger,
 	}
 }
 

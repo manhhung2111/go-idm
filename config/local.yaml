@@ -2,7 +2,7 @@ database:
   host: 127.0.0.1
   port: 3306
   username: root
-  password: 211103
+  password: password
   database: goidm
 cache:
   type: "redis"
@@ -16,6 +16,10 @@ auth:
     expires_in: 24h
     regenerate_token_before_expiry: 1h
 grpc:
-  address: "0.0.0.0:8080"
+  address: 127.0.0.1:8080
 http:
-  address: "0.0.0.0:8081"
+  address: 127.0.0.1:8081
+kafka:
+  host: 127.0.0.1
+  port: 9092
+  client_id: "go_idm"

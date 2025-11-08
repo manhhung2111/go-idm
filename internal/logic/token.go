@@ -66,7 +66,7 @@ func (t *token) GetToken(ctx context.Context, accountId uint64) (string, time.Ti
 		"exp": expireTime.Unix(),
 	})
 
-	tokenString, err := token.SignedString(privateKey)
+	tokenString, err := token.SignedString([]byte(privateKey))
 	if err != nil {
 		logger.With(zap.Error(err)).Error("failed to sign token")
 		return "", time.Time{}, errFailedToSignToken
@@ -79,20 +79,14 @@ func (t *token) GetAccountIDAndExpireTime(ctx context.Context, token string) (ui
 	logger := utils.LoggerWithContext(ctx, t.logger)
 
 	parsedToken, err := jwt.Parse(token, func(parsedToken *jwt.Token) (interface{}, error) {
+		// Ensure it's signed with HMAC
 		if _, ok := parsedToken.Method.(*jwt.SigningMethodHMAC); !ok {
 			logger.Error("unexpected signing method")
 			return nil, errUnexpectedSigningMethod
 		}
 
-		claims, ok := parsedToken.Claims.(jwt.MapClaims)
-		if !ok {
-			logger.Error("cannot get token's claims")
-			return nil, errCannotGetTokensClaims
-		}
-
-		return claims, nil
+		return []byte(privateKey), nil
 	})
-
 	if err != nil {
 		logger.With(zap.Error(err)).Error("failed to parse token")
 		return 0, time.Time{}, err
@@ -124,7 +118,8 @@ func (t *token) GetAccountIDAndExpireTime(ctx context.Context, token string) (ui
 	return uint64(accountId), time.Unix(int64(expireTimeUnix), 0), nil
 }
 
+
 func (t *token) WithDatabase(database database.IDatabase) Token {
-	t.accountDataAccessor = t.accountDataAccessor.WithDatabase(database)
+	t.accountDataAccessor = t.accountDataAccessor.WithDatabase(database, t.logger)
 	return t
 }

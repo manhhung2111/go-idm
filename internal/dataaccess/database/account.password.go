@@ -22,15 +22,15 @@ const (
 )
 
 type AccountPassword struct {
-	OfAccountId    uint64 `sql:"of_account_id"`
-	HashedPassword string `sql:"hashed_password"`
+	OfAccountId    uint64 `db:"of_account_id"`
+	HashedPassword string `db:"hashed_password"`
 }
 
 type AccountPasswordDataAccessor interface {
 	CreateAccountPassword(ctx context.Context, accountPassword AccountPassword) error
 	GetAccountPassword(ctx context.Context, ofAccountId uint64) (AccountPassword, error)
 	UpdateAccountPassword(ctx context.Context, accountPassword AccountPassword) error
-	WithDatabase(database IDatabase) AccountPasswordDataAccessor
+	WithDatabase(database IDatabase, logger *zap.Logger) AccountPasswordDataAccessor
 }
 
 type accountPasswordDataAccessor struct {
@@ -106,8 +106,9 @@ func (a *accountPasswordDataAccessor) GetAccountPassword(ctx context.Context, of
 }
 
 // WithDatabase implements AccountPasswordDataAccessor.
-func (a *accountPasswordDataAccessor) WithDatabase(database IDatabase) AccountPasswordDataAccessor {
+func (a *accountPasswordDataAccessor) WithDatabase(database IDatabase, logger *zap.Logger) AccountPasswordDataAccessor {
 	return &accountPasswordDataAccessor{
 		database: database,
+		logger: logger,
 	}
 }

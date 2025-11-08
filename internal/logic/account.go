@@ -89,7 +89,7 @@ func (a *account) CreateAccount(ctx context.Context, params CreateAccountParams)
 			return errors.New("account_name is already taken")
 		}
 
-		accountId, err = a.accountDataAccessor.WithDatabase(td).CreateAccount(ctx, database.Account{
+		accountId, err = a.accountDataAccessor.WithDatabase(td, logger).CreateAccount(ctx, database.Account{
 			AccountName: params.AccountName,
 		})
 
@@ -102,7 +102,7 @@ func (a *account) CreateAccount(ctx context.Context, params CreateAccountParams)
 			return hashErr
 		}
 
-		if err := a.accountPasswordDataAccessor.WithDatabase(td).CreateAccountPassword(ctx, database.AccountPassword{
+		if err := a.accountPasswordDataAccessor.WithDatabase(td, logger).CreateAccountPassword(ctx, database.AccountPassword{
 			OfAccountId:    accountId,
 			HashedPassword: hashedPassword,
 		}); err != nil {

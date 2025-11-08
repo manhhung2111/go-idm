@@ -3,6 +3,7 @@ version: "3.8"
 services:
   mysql:
     image: mysql:8.3.0
+    container_name: mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -12,26 +13,39 @@ services:
   
   redis:
     image: redis:7.2.4
+    container_name: redis
     restart: always
     ports:
         - "6379:6379"
   zookeeper:
-    image: "bitnami/zookeeper:3.8-debian-10"
+    image: confluentinc/cp-zookeeper:7.9.4
+    container_name: zookeeper
     ports:
       - "2181:2181"
     environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    image: "bitnami/kafka:3.1-debian-10"
+    image: confluentinc/cp-kafka:7.9.4
+    container_name: kafka
     ports:
       - "9092:9092"
-    environment:
-      - KAFKA_BROKER_ID=1
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
       - zookeeper
-    restart: always
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+
+      # Listeners and advertised listeners
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+
+      # Allow topics to auto-create when you produce to them
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+      # Minimal replication for single-broker setup
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
