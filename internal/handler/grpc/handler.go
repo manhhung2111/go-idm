@@ -64,22 +64,49 @@ func (h *Handler) CreateDownloadTask(ctx context.Context, req *go_idm_v1.CreateD
 	}
 
 	return &go_idm_v1.CreateDownloadTaskResponse{
-		DownloadTask: &output.DownloadTask,
+		DownloadTask: output.DownloadTask,
 	}, nil
 }
 
 func (h *Handler) GetDownloadTaskList(ctx context.Context, req *go_idm_v1.GetDownloadTaskListRequest) (*go_idm_v1.GetDownloadTaskListResponse, error) {
-	fmt.Println("GetDownloadTaskList called")
-	return &go_idm_v1.GetDownloadTaskListResponse{}, nil
+	output, err := h.downloadTaskLogic.GetDownloadTaskList(ctx, logic.GetDownloadTaskListParams{
+		Token:  req.GetToken(),
+		Offset: req.GetOffset(),
+		Limit:  req.GetLimit(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &go_idm_v1.GetDownloadTaskListResponse{
+		DownloadTaskList:       output.DownloadTaskList,
+		TotalDownloadTaskCount: output.Total,
+	}, nil
 }
 
 func (h *Handler) UpdateDownloadTask(ctx context.Context, req *go_idm_v1.UpdateDownloadTaskRequest) (*go_idm_v1.UpdateDownloadTaskResponse, error) {
-	fmt.Println("UpdateDownloadTask called")
-	return &go_idm_v1.UpdateDownloadTaskResponse{}, nil
+	output, err := h.downloadTaskLogic.UpdateDownloadTask(ctx, logic.UpdateDownloadTaskParams{
+		Token:          req.GetToken(),
+		DownloadTaskId: req.GetDownloadTaskId(),
+		URL:            req.GetUrl(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &go_idm_v1.UpdateDownloadTaskResponse{
+		DownloadTask: output.DownloadTask,
+	}, nil
 }
 
 func (h *Handler) DeleteDownloadTask(ctx context.Context, req *go_idm_v1.DeleteDownloadTaskRequest) (*go_idm_v1.DeleteDownloadTaskResponse, error) {
-	fmt.Println("DeleteDownloadTask called")
+	if err := h.downloadTaskLogic.DeleteDownloadTask(ctx, logic.DeleteDownloadTaskParams{
+		Token:          req.GetToken(),
+		DownloadTaskId: req.GetDownloadTaskId(),
+	}); err != nil {
+		return nil, err
+	}
+
 	return &go_idm_v1.DeleteDownloadTaskResponse{}, nil
 }
 

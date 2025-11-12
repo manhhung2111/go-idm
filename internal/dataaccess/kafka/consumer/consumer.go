@@ -8,26 +8,27 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/manhhung2111/go-idm/internal/config"
+	"github.com/manhhung2111/go-idm/internal/utils"
 	"go.uber.org/zap"
 )
 
 type HandlerFunc func(ctx context.Context, topic string, payload []byte) error
 
 type Consumer interface {
-	RegisterHandler(topic string, handlerFunc HandlerFunc) error
+	RegisterHandler(topic string, handlerFunc HandlerFunc)
 	Start(ctx context.Context) error
 }
 
 type partitionConsumerAndHandlerFunc struct {
-	topic         string
+	topic             string
 	partitionConsumer sarama.PartitionConsumer
 	handlerFunc       HandlerFunc
 }
 
 type consumer struct {
-	saramaConsumer                      sarama.Consumer
-	partitionConsumerAndHandlerFuncList []partitionConsumerAndHandlerFunc
-	logger                              *zap.Logger
+	saramaConsumer        sarama.Consumer
+	topicToHandlerFuncMap map[string]HandlerFunc
+	logger                *zap.Logger
 }
 
 func newSaramaConfig(kafkaConfig config.Kafka) *sarama.Config {
@@ -53,49 +54,49 @@ func NewConsumer(
 	}, nil
 }
 
-func (c *consumer) RegisterHandler(topic string, handlerFunc HandlerFunc) error {
+func (c *consumer) RegisterHandler(topic string, handlerFunc HandlerFunc) {
+	c.topicToHandlerFuncMap[topic] = handlerFunc
+}
+
+func (c *consumer) consume(topic string, handlerFunc HandlerFunc, exitSignalChannel chan os.Signal) error {
+	logger := c.logger.With(zap.String("topic", topic))
+
 	partitionConsumer, err := c.saramaConsumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
 	if err != nil {
 		return fmt.Errorf("failed to create sarama partition consumer: %w", err)
 	}
 
-	c.partitionConsumerAndHandlerFuncList = append(
-		c.partitionConsumerAndHandlerFuncList,
-		partitionConsumerAndHandlerFunc{
-			topic:         topic,
-			partitionConsumer: partitionConsumer,
-			handlerFunc:       handlerFunc,
-		})
+	for {
+		select {
+		case message := <-partitionConsumer.Messages():
+			err = handlerFunc(context.Background(), topic, message.Value)
+			if err != nil {
+				logger.With(zap.Error(err)).Error("failed to handle message")
+			}
 
-	return nil
+		case <-exitSignalChannel:
+			break
+		}
+	}
 }
 
-func (c consumer) Start(_ context.Context) error {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
+func (c consumer) Start(ctx context.Context) error {
+	logger := utils.LoggerWithContext(ctx, c.logger)
 
-	for i := range c.partitionConsumerAndHandlerFuncList {
-		go func(i int) {
-			topic := c.partitionConsumerAndHandlerFuncList[i].topic
-			partitionConsumer := c.partitionConsumerAndHandlerFuncList[i].partitionConsumer
-			handlerFunc := c.partitionConsumerAndHandlerFuncList[i].handlerFunc
-			logger := c.logger.With(zap.String("topic", topic))
+	exitSignalChannel := make(chan os.Signal, 1)
+	signal.Notify(exitSignalChannel, os.Interrupt)
 
-			for {
-				select {
-				case message := <-partitionConsumer.Messages():
-					if err := handlerFunc(context.Background(), topic, message.Value); err != nil {
-						logger.With(zap.Error(err)).Error("failed to handle message")
-					}
-
-				case <-signals:
-					// exit the goroutine when a signal is received
-					return
-				}
+	for topic, handlerFunc := range c.topicToHandlerFuncMap {
+		go func(topic string, handlerFunc HandlerFunc) {
+			if err := c.consume(topic, handlerFunc, exitSignalChannel); err != nil {
+				logger.
+					With(zap.String("topic", topic)).
+					With(zap.Error(err)).
+					Error("failed to consume message from topic")
 			}
-		}(i)
+		}(topic, handlerFunc)
 	}
 
-	<-signals
+	<-exitSignalChannel
 	return nil
 }

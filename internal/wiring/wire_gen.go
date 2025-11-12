@@ -65,7 +65,7 @@ func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func()
 		return nil, nil, err
 	}
 	downloadTaskCreatedProducer := producer.NewDownloadTaskCreatedProducer(client, logger)
-	downloadTask := logic.NewDownloadTask(token, downloadTaskDataAccessor, goquDatabase, logger, downloadTaskCreatedProducer)
+	downloadTask := logic.NewDownloadTask(token, accountDataAccessor, downloadTaskDataAccessor, goquDatabase, logger, downloadTaskCreatedProducer)
 	goIDMServiceServer := grpc.NewHandler(account, downloadTask)
 	configGRPC := configConfig.GRPC
 	server := grpc.NewServer(goIDMServiceServer, configGRPC, logger)

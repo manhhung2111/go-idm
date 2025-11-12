@@ -10,8 +10,8 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/wire v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
+	github.com/samber/lo v1.39.0
 	github.com/spf13/cobra v1.10.1
-	github.com/tranHieuDev23/GoLoad v0.0.0-20240401061611-6a9117159e0f
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.43.0
 	google.golang.org/grpc v1.76.0
@@ -24,7 +24,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
@@ -42,6 +41,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
+	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.30.0 // indirect

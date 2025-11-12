@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/manhhung2111/go-idm/internal/dataaccess/database"
 	"github.com/manhhung2111/go-idm/internal/utils"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -16,7 +15,7 @@ const (
 )
 
 type DownloadTaskCreated struct {
-	DownloadTask database.DownloadTask
+	Id uint64 `json:"id"`
 }
 
 type DownloadTaskCreatedProducer interface {
