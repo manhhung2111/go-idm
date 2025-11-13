@@ -2,26 +2,36 @@ package grpc
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"io"
 
+	"github.com/manhhung2111/go-idm/internal/config"
 	go_idm_v1 "github.com/manhhung2111/go-idm/internal/generated/proto"
 	"github.com/manhhung2111/go-idm/internal/logic"
 )
 
 type Handler struct {
 	go_idm_v1.UnimplementedGoIDMServiceServer
-	accountLogic logic.Account
-	downloadTaskLogic logic.DownloadTask
+	accountLogic                                 logic.Account
+	downloadTaskLogic                            logic.DownloadTask
+	getDownloadTaskFileResponseBufferSizeInBytes uint64
 }
 
 func NewHandler(
 	accountLogic logic.Account,
 	downloadTaskLogic logic.DownloadTask,
-) go_idm_v1.GoIDMServiceServer {
-	return &Handler{
-		accountLogic: accountLogic,
-		downloadTaskLogic: downloadTaskLogic,
+	grpcConfig config.GRPC,
+) (go_idm_v1.GoIDMServiceServer, error) {
+	getDownloadTaskFileResponseBufferSizeInBytes, err := grpcConfig.GetDownloadTaskFile.GetResponseBufferSizeInBytes()
+	if err != nil {
+		return nil, err
 	}
+
+	return &Handler{
+		accountLogic:      accountLogic,
+		downloadTaskLogic: downloadTaskLogic,
+		getDownloadTaskFileResponseBufferSizeInBytes: getDownloadTaskFileResponseBufferSizeInBytes,
+	}, nil
 }
 
 func (h *Handler) CreateAccount(ctx context.Context, req *go_idm_v1.CreateAccountRequest) (*go_idm_v1.CreateAccountResponse, error) {
@@ -110,11 +120,40 @@ func (h *Handler) DeleteDownloadTask(ctx context.Context, req *go_idm_v1.DeleteD
 	return &go_idm_v1.DeleteDownloadTaskResponse{}, nil
 }
 
-func (h *Handler) GetDownloadTaskFile(req *go_idm_v1.GetDownloadTaskFiletRequest, stream go_idm_v1.GoIDMService_GetDownloadTaskFileServer) error {
-	fmt.Println("GetDownloadTaskFile called")
-	resp := &go_idm_v1.GetDownloadTaskFiletResponse{}
-	if err := stream.Send(resp); err != nil {
+func (h *Handler) GetDownloadTaskFile(req *go_idm_v1.GetDownloadTaskFiletRequest, server go_idm_v1.GoIDMService_GetDownloadTaskFileServer) error {
+	outputReader, err := h.downloadTaskLogic.GetDownloadTaskFile(context.Background(), logic.GetDownloadTaskFileParams{
+		Token:          req.Token,
+		DownloadTaskID: req.GetDownloadTaskId(),
+	})
+	if err != nil {
 		return err
 	}
+
+	defer outputReader.Close()
+
+	for {
+		dataBuffer := make([]byte, h.getDownloadTaskFileResponseBufferSizeInBytes)
+		readByteCount, readErr := outputReader.Read(dataBuffer)
+
+		if readByteCount > 0 {
+			sendErr := server.Send(&go_idm_v1.GetDownloadTaskFiletResponse{
+				Data: dataBuffer[:readByteCount],
+			})
+			if sendErr != nil {
+				return sendErr
+			}
+
+			continue
+		}
+
+		if readErr != nil {
+			if errors.Is(readErr, io.EOF) {
+				break
+			}
+
+			return readErr
+		}
+	}
+
 	return nil
 }

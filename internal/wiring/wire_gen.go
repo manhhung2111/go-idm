@@ -74,8 +74,13 @@ func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func()
 		return nil, nil, err
 	}
 	downloadTask := logic.NewDownloadTask(token, accountDataAccessor, downloadTaskDataAccessor, goquDatabase, logger, downloadTaskCreatedProducer, fileClient)
-	goIDMServiceServer := grpc.NewHandler(account, downloadTask)
 	configGRPC := configConfig.GRPC
+	goIDMServiceServer, err := grpc.NewHandler(account, downloadTask, configGRPC)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	server := grpc.NewServer(goIDMServiceServer, configGRPC, logger)
 	configHTTP := configConfig.HTTP
 	httpServer := http.NewServer(configGRPC, configHTTP, logger)

@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/IBM/sarama v1.46.3
 	github.com/doug-martin/goqu/v9 v9.19.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
