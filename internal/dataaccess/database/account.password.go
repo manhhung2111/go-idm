@@ -22,7 +22,7 @@ const (
 )
 
 type AccountPassword struct {
-	OfAccountId    uint64 `db:"of_account_id" goqu:"skipinsert,skipupdate"`
+	OfAccountId    uint64 `db:"of_account_id" goqu:"skipupdate"`
 	HashedPassword string `db:"hashed_password"`
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/manhhung2111/go-idm/internal/dataaccess"
 	"github.com/manhhung2111/go-idm/internal/dataaccess/cache"
 	"github.com/manhhung2111/go-idm/internal/dataaccess/database"
+	"github.com/manhhung2111/go-idm/internal/dataaccess/file"
 	"github.com/manhhung2111/go-idm/internal/dataaccess/kafka/consumer"
 	"github.com/manhhung2111/go-idm/internal/dataaccess/kafka/producer"
 	"github.com/manhhung2111/go-idm/internal/handler"
@@ -65,13 +66,20 @@ func InitializeServer(configFilePath config.ConfigFilePath) (*app.Server, func()
 		return nil, nil, err
 	}
 	downloadTaskCreatedProducer := producer.NewDownloadTaskCreatedProducer(client, logger)
-	downloadTask := logic.NewDownloadTask(token, accountDataAccessor, downloadTaskDataAccessor, goquDatabase, logger, downloadTaskCreatedProducer)
+	download := configConfig.Download
+	fileClient, err := file.NewClient(download, logger)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	downloadTask := logic.NewDownloadTask(token, accountDataAccessor, downloadTaskDataAccessor, goquDatabase, logger, downloadTaskCreatedProducer, fileClient)
 	goIDMServiceServer := grpc.NewHandler(account, downloadTask)
 	configGRPC := configConfig.GRPC
 	server := grpc.NewServer(goIDMServiceServer, configGRPC, logger)
 	configHTTP := configConfig.HTTP
 	httpServer := http.NewServer(configGRPC, configHTTP, logger)
-	downloadTaskCreateHandler := handler_consumer.NewDownloadTaskCreatedHandler(logger)
+	downloadTaskCreateHandler := handler_consumer.NewDownloadTaskCreatedHandler(downloadTask, logger)
 	consumerConsumer, err := consumer.NewConsumer(kafka, logger)
 	if err != nil {
 		cleanup2()

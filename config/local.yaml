@@ -23,3 +23,9 @@ kafka:
   host: 127.0.0.1
   port: 9092
   client_id: "go_idm"
+download:
+  mode: s3
+  bucket: downloaded-files
+  address: "127.0.0.1:9000"
+  username: "ROOTUSER"
+  password: "CHANGEME123"

@@ -51,6 +51,7 @@ func NewConsumer(
 	return &consumer{
 		saramaConsumer: saramaConsumer,
 		logger:         logger,
+		topicToHandlerFuncMap: make(map[string]HandlerFunc),
 	}, nil
 }
 

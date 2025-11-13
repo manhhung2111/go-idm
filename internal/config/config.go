@@ -18,6 +18,7 @@ type Config struct {
 	Database Database `yaml:"database"`
 	Cache    Cache    `yaml:"cache"`
 	Kafka    Kafka    `yaml:"kafka"`
+	Download Download `yaml:"download"`
 }
 
 func NewConfig(filePath ConfigFilePath) (Config, error) {
