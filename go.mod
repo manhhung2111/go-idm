@@ -11,7 +11,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/wire v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
-	github.com/minio/minio-go v6.0.14+incompatible
+	github.com/minio/minio-go/v7 v7.0.97
 	github.com/samber/lo v1.39.0
 	github.com/spf13/cobra v1.10.1
 	go.uber.org/zap v1.27.0
@@ -31,6 +31,7 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
@@ -39,11 +40,17 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/klauspost/compress v1.18.1 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
+	github.com/klauspost/crc32 v1.3.0 // indirect
+	github.com/minio/crc64nvme v1.1.0 // indirect
+	github.com/minio/md5-simd v1.1.2 // indirect
+	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/rs/xid v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/tinylib/msgp v1.3.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 // indirect
 	golang.org/x/net v0.46.0 // indirect
@@ -51,4 +58,5 @@ require (
 	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

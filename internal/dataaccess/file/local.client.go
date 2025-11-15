@@ -69,7 +69,7 @@ func (l *LocalClient) Read(ctx context.Context, filePath string) (io.ReadCloser,
 		logger.With(zap.Error(err)).Error("failed to open file")
 		return nil, status.Error(codes.Internal, "failed to open file")
 	}
-	
+
 	return newBufferedFileReader(file), nil
 }
 
@@ -86,4 +86,3 @@ func (l *LocalClient) Write(ctx context.Context, filePath string) (io.WriteClose
 
 	return file, nil
 }
-
